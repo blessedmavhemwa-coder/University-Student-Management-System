@@ -4,7 +4,7 @@ This is a project on the development of a web application which is used to manag
 ## Application Pages / Dashboard
 1. Login Page
 
-   <img width="1365" height="719" alt="Screenshot 2026-05-08 101937" src="https://github.com/user-attachments/assets/e2b3bf0a-bd87-4ab8-811f-4e0ef39fd0ba" />
+   <img width="1365" height="719" alt="Screenshot 2026-05-08 101937" src="https://github.com/user-attachments/assets/1aaca5ac-e03d-4a24-98f2-e5192ad83e28" />
 
    This is the login page, where the users input their email and password to access the university management system. The page features a clean form with fields for email address and
    password, a “Login” button, and a link for new users to register. Below the form, demo credentials are provided for testing purposes: a student account (kudzai.m@hmu.ac.zw /
@@ -15,7 +15,7 @@ This is a project on the development of a web application which is used to manag
 
 2. Admin Dashboard
 
-   <img width="1365" height="717" alt="Screenshot 2026-05-08 102642" src="https://github.com/user-attachments/assets/64f328a0-ebd5-4ff1-98a8-8c19cbab10c0" />
+   <img width="1365" height="717" alt="Screenshot 2026-05-08 102642" src="https://github.com/user-attachments/assets/302264f3-ef55-40e5-86e5-ea6b5b4193bc" />
 
    This is the Admin's Dashboard what the admin will see after logging in, its features are displayed through a clean overview of key statistics and quick management tools. The
    dashboard shows four summary cards: Total Students (5), Pending Applications (1), Total Lecturers (6), and Active Modules (6), giving the admin an instant snapshot of the
@@ -26,7 +26,7 @@ This is a project on the development of a web application which is used to manag
 
 3. Student Dashboard
 
-   <img width="1365" height="722" alt="Screenshot 2026-05-08 102823" src="https://github.com/user-attachments/assets/4929d218-a780-46eb-8849-4c210e7a8138" />
+   <img width="1365" height="722" alt="Screenshot 2026-05-08 102823" src="https://github.com/user-attachments/assets/f14f84a0-542e-41fc-b171-e7c1e4c2a0db" />
 
    This is the Student Dashboard where they are greeted by their name, department, level of study, and student ID in a prominent welcome banner at the top of the page. The dashboard
    provides a quick overview of the student's academic status through four summary cards displaying their current number of enrolled modules, outstanding fees, upcoming lectures, and
@@ -37,7 +37,7 @@ This is a project on the development of a web application which is used to manag
 
 4. Lecturer Dashboard
 
-   <img width="1365" height="719" alt="Screenshot 2026-05-08 102921" src="https://github.com/user-attachments/assets/f6e0f511-be4d-4f15-bf5d-a916d3829b2e" />
+   <img width="1365" height="719" alt="Screenshot 2026-05-08 102921" src="https://github.com/user-attachments/assets/9dc664c3-b731-4d00-9efe-ed17ac4bdb6c" />
 
    This is the Lecturer Dashboard, designed to give academic staff a concise and functional overview of their teaching responsibilities. Upon logging in, the lecturer is greeted by
    their name in the top right corner — in this case, Dr. Tendai Ncube — alongside a logout button. Three summary cards at the top of the page display key statistics at a glance: the
@@ -92,6 +92,7 @@ university-management-system/
 
 ## Relational Schema
 
-<img width="1444" height="1231" alt="Relational Schema" src="https://github.com/user-attachments/assets/fc93045f-1129-4524-a30d-df58989f0e2e" />
+<img width="1444" height="1231" alt="Relational Schema" src="https://github.com/user-attachments/assets/3fbc67c4-cf10-4404-8cdc-780b19755541" />
+
 
 Above is the relational schema of the entire system with all the tables to be created by the application.
