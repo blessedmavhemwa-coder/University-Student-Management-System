@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}University Management System{% endblock %}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.3);
+            border-radius: 5px;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-header h3 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-header p {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .user-info-sidebar {
+            padding: 20px;
+            background: rgba(0,0,0,0.2);
+            margin: 10px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-size: 24px;
+        }
+
+        .nav-menu {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+
+        .nav-item {
+            margin: 5px 15px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            transition: all 0.3s;
+            gap: 12px;
+        }
+
+        .nav-link:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateX(5px);
+        }
+
+        .nav-link.active {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .nav-icon {
+            font-size: 20px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .nav-text {
+            font-size: 14px;
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            background: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        .page-title {
+            font-size: 20px;
+            color: #333;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-name {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+        }
+
+        .content-container {
+            padding: 30px;
+        }
+
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+
+        .flash-message {
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .flash-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .flash-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .flash-message.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .flash-message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            background: #f8f9fa;
+        }
+
+        .card-header h3 {
+            color: #333;
+            font-size: 18px;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #2a5298;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .session-warning {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #ffc107;
+            color: #333;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 2000;
+            display: none;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .menu-toggle {
+                display: block;
+                position: fixed;
+                top: 15px;
+                left: 15px;
+                z-index: 1001;
+                background: #2a5298;
+                color: white;
+                border: none;
+                padding: 10px;
+                border-radius: 5px;
+                cursor: pointer;
+            }
+
+            .top-bar {
+                padding-left: 60px;
+            }
+
+            .content-container {
+                padding: 15px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .menu-toggle {
+                display: none;
+            }
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #555;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #2a5298;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1e3c72;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+            transform: translateY(-2px);
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #2a5298;
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #2a5298;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .badge-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #2a5298;
+        }
+
+        .modal-header h3 {
+            color: #2a5298;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 12px;
+            border-top: 1px solid #eee;
+            margin-top: 30px;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h3>🏫 University MS</h3>
+                <p>Student Management System</p>
+            </div>
+
+            {% if session.user_role %}
+            <div class="user-info-sidebar">
+                <div class="user-avatar">
+                    {% if session.user_role == 'student' %}👨‍🎓
+                    {% elif session.user_role == 'lecturer' %}👨‍🏫
+                    {% elif session.user_role == 'admin' %}👑
+                    {% else %}👤{% endif %}
+                </div>
+                <div><strong>{{ session.user_name }}</strong></div>
+                <div style="font-size: 12px; opacity: 0.8;">
+                    {% if session.user_role == 'student' %}Student
+                    {% elif session.user_role == 'lecturer' %}Lecturer
+                    {% elif session.user_role == 'admin' %}Administrator
+                    {% else %}{{ session.user_role|title }}{% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <ul class="nav-menu">
+                <!-- Common Dashboard for all users -->
+                <li class="nav-item">
+                    <a href="{{ url_for('home') }}" class="nav-link {% if request.endpoint == 'home' %}active{% endif %}">
+                        <span class="nav-icon">🏠</span>
+                        <span class="nav-text">Dashboard</span>
+                    </a>
+                </li>
+
+                {% if session.user_role == 'student' %}
+                <!-- Student specific links (without duplicate dashboard) -->
+                <li class="nav-item">
+                    <a href="{{ url_for('student_financial_statement') }}" class="nav-link {% if request.endpoint == 'student_financial_statement' %}active{% endif %}">
+                        <span class="nav-icon">💰</span>
+                        <span class="nav-text">Financial Statement</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('student_coursework') }}" class="nav-link {% if request.endpoint == 'student_coursework' %}active{% endif %}">
+                        <span class="nav-icon">📝</span>
+                        <span class="nav-text">Coursework Assessment</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('student_accommodation') }}" class="nav-link {% if request.endpoint == 'student_accommodation' %}active{% endif %}">
+                        <span class="nav-icon">🏠</span>
+                        <span class="nav-text">Accommodation</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('register_module') }}" class="nav-link {% if request.endpoint == 'register_module' %}active{% endif %}">
+                        <span class="nav-icon">📚</span>
+                        <span class="nav-text">Module Registration</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('student_exam_timetable') }}" class="nav-link {% if request.endpoint == 'student_exam_timetable' %}active{% endif %}">
+                        <span class="nav-icon">📅</span>
+                        <span class="nav-text">Exam Timetable</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('student_lecture_schedule') }}" class="nav-link {% if request.endpoint == 'student_lecture_schedule' %}active{% endif %}">
+                        <span class="nav-icon">📖</span>
+                        <span class="nav-text">Lecture Schedule</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('view_results') }}" class="nav-link {% if request.endpoint == 'view_results' %}active{% endif %}">
+                        <span class="nav-icon">📊</span>
+                        <span class="nav-text">My Results</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% if session.user_role == 'lecturer' %}
+                <li class="nav-item">
+                    <a href="{{ url_for('lecturer_courses') }}" class="nav-link">
+                        <span class="nav-icon">📖</span>
+                        <span class="nav-text">My Courses</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('lecturer_enter_marks') }}" class="nav-link">
+                        <span class="nav-icon">✏️</span>
+                        <span class="nav-text">Enter Marks</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% if session.user_role == 'admin' %}
+                <li class="nav-item">
+                    <a href="{{ url_for('admin_manage_students') }}" class="nav-link">
+                        <span class="nav-icon">👥</span>
+                        <span class="nav-text">Manage Students</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('admin_manage_lecturers') }}" class="nav-link">
+                        <span class="nav-icon">👨‍🏫</span>
+                        <span class="nav-text">Manage Lecturers</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('admin_manage_modules') }}" class="nav-link">
+                        <span class="nav-icon">📦</span>
+                        <span class="nav-text">Manage Modules</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('admin_manage_fees') }}" class="nav-link">
+                        <span class="nav-icon">💰</span>
+                        <span class="nav-text">Fee Management</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('admin_manage_accommodation') }}" class="nav-link">
+                        <span class="nav-icon">🏠</span>
+                        <span class="nav-text">Accommodation</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('admin_pending_applications') }}" class="nav-link">
+                        <span class="nav-icon">⏳</span>
+                        <span class="nav-text">Pending Applications</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                <li class="nav-item">
+                    <a href="{{ url_for('logout') }}" class="nav-link">
+                        <span class="nav-icon">🚪</span>
+                        <span class="nav-text">Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="top-bar">
+                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+                <div class="page-title">{% block page_title %}{% endblock %}</div>
+                <div class="user-menu">
+                    <span class="user-name">
+                        Welcome, {{ session.user_name if session.user_name else 'Guest' }}
+                    </span>
+                    <a href="{{ url_for('logout') }}" class="logout-btn">
+                        <span>🚪</span> Logout
+                    </a>
+                </div>
+            </div>
+
+            <div class="content-container">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="flash-messages">
+                            {% for category, message in messages %}
+                                <div class="flash-message {{ category }}">{{ message }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+
+                <div class="footer">
+                    <p>&copy; 2024 University Management System. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="sessionWarning" class="session-warning">
+        <strong>⚠️ Session Timeout Warning</strong><br>
+        Your session will expire in <span id="timer">5:00</span> minutes due to inactivity.
+        <button onclick="refreshSession()" style="margin-left: 10px; padding: 5px 10px; background: #fff; border: none; border-radius: 4px; cursor: pointer;">Stay Logged In</button>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.querySelector('.menu-toggle');
+
+            if (window.innerWidth <= 768) {
+                if (!sidebar.contains(event.target) && !toggleBtn.contains(event.target)) {
+                    sidebar.classList.remove('open');
+                }
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(function(message) {
+                setTimeout(function() {
+                    message.style.opacity = '0';
+                    setTimeout(function() {
+                        if (message.parentNode) {
+                            message.remove();
+                        }
+                    }, 300);
+                }, 5000);
+            });
+        });
+
+        document.querySelectorAll('form').forEach(function(form) {
+            form.addEventListener('submit', function() {
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="loading"></span> Processing...';
+                }
+            });
+        });
+
+        document.querySelectorAll('.btn-delete, [onclick*="delete"]').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                if (!confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
+                    e.preventDefault();
+                }
+            });
+        });
+
+        let sessionTimeout;
+        let warningTimeout;
+        let warningShown = false;
+
+        function resetSessionTimer() {
+            if (sessionTimeout) clearTimeout(sessionTimeout);
+            if (warningTimeout) clearTimeout(warningTimeout);
+
+            if (warningShown) {
+                document.getElementById('sessionWarning').style.display = 'none';
+                warningShown = false;
+            }
+
+            warningTimeout = setTimeout(showSessionWarning, 25 * 60 * 1000);
+            sessionTimeout = setTimeout(autoLogout, 30 * 60 * 1000);
+        }
+
+        function showSessionWarning() {
+            if (!warningShown) {
+                document.getElementById('sessionWarning').style.display = 'block';
+                warningShown = true;
+
+                let timeLeft = 5 * 60;
+                const timerElement = document.getElementById('timer');
+
+                const countdown = setInterval(function() {
+                    if (!warningShown) {
+                        clearInterval(countdown);
+                        return;
+                    }
+
+                    const minutes = Math.floor(timeLeft / 60);
+                    const seconds = timeLeft % 60;
+                    timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+                    if (timeLeft <= 0) {
+                        clearInterval(countdown);
+                    }
+                    timeLeft--;
+                }, 1000);
+            }
+        }
+
+        function refreshSession() {
+            fetch('/refresh_session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            }).then(function(response) {
+                if (response.ok) {
+                    resetSessionTimer();
+                    document.getElementById('sessionWarning').style.display = 'none';
+                    warningShown = false;
+                }
+            });
+        }
+
+        function autoLogout() {
+            navigator.sendBeacon('/logout');
+            window.location.href = '/login?timeout=1';
+        }
+
+        const activities = ['click', 'keypress', 'scroll', 'mousemove', 'touchstart'];
+        activities.forEach(function(activity) {
+            document.addEventListener(activity, resetSessionTimer);
+        });
+
+        {% if session.user_id %}
+        resetSessionTimer();
+        {% endif %}
+
+        let logoutExecuted = false;
+        window.addEventListener('beforeunload', function() {
+            if (!logoutExecuted) {
+                navigator.sendBeacon('/logout');
+                logoutExecuted = true;
+            }
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

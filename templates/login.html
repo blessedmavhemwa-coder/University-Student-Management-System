@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Login - University Management System{% endblock %}
+
+{% block page_title %}Login{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 500px; margin: 50px auto;">
+    <div class="card-header">
+        <h3>Login to Your Account</h3>
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 500;">Email Address</label>
+                <input type="email" name="email" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 500;">Password</label>
+                <input type="password" name="password" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
+        </form>
+        
+        <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+            <p>Don't have an account? <a href="{{ url_for('register') }}" style="color: #2a5298;">Register Here</a></p>
+        </div>
+        
+        <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; font-size: 12px;">
+            <strong>Demo Accounts:</strong><br>
+            <div style="border:1px solid #ccc; padding:10px; margin-bottom:20px;">
+                Student: {{ random_student.email if random_student else 'No student found' }} / {{ random_student.password if random_student else '—' }}<br>
+                Lecturer: {{ random_lecturer.email if random_lecturer else 'No lecturer found' }} / {{ random_lecturer.password if random_lecturer else '—' }}<br>
+                Admin: admin@university.com / admin123
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

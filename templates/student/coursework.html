@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Coursework Assessment{% endblock %}
+
+{% block page_title %}Coursework Assessment{% endblock %}
+
+{% block content %}
+<style>
+    .module-card {
+        background: white;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .module-header {
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .assessment-table {
+        width: 100%;
+    }
+    
+    .score-high { color: #28a745; font-weight: bold; }
+    .score-medium { color: #ffc107; font-weight: bold; }
+    .score-low { color: #dc3545; font-weight: bold; }
+    
+    .final-grade {
+        display: inline-block;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: bold;
+        margin-top: 15px;
+    }
+    
+    .grade-A { background: #d4edda; color: #155724; }
+    .grade-B { background: #d1ecf1; color: #0c5460; }
+    .grade-C { background: #fff3cd; color: #856404; }
+    .grade-D { background: #ffeaa7; color: #856404; }
+    .grade-E { background: #f8d7da; color: #721c24; }
+    .grade-F { background: #f8d7da; color: #721c24; }
+</style>
+
+{% for module in modules %}
+<div class="module-card">
+    <div class="module-header">
+        <h3>{{ module.module_name }} ({{ module.module_code }})</h3>
+        <p>{{ module.credits }} Credits | Lecturer: {{ module.lecturer_name or 'TBA' }} | Semester: {{ module.semester }}</p>
+    </div>
+    <div class="card-body">
+        <table class="assessment-table">
+            <thead>
+                <tr>
+                    <th>Assessment</th>
+                    <th>Weight</th>
+                    <th>Your Score</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for assessment in module.assessments %}
+                <tr>
+                    <td>{{ assessment.name }}</td>
+                    <td>{{ assessment.weight }}%</td>
+                    <td>
+                        {% if assessment.score %}
+                            <span class="{% if assessment.score >= 70 %}score-high{% elif assessment.score >= 50 %}score-medium{% else %}score-low{% endif %}">
+                                {{ assessment.score }}%
+                            </span>
+                        {% else %}
+                            Not Available
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if assessment.status == 'Graded' %}
+                            <span class="badge badge-success">Graded</span>
+                        {% else %}
+                            <span class="badge badge-warning">Pending</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+            <strong>Final Grade:</strong>
+            <span class="final-grade grade-{{ module.final_grade }}">
+                {{ module.final_grade if module.final_grade != 'Not Available' else 'Not Available' }}
+            </span>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body" style="text-align: center; padding: 50px;">
+        <p>No coursework records found.</p>
+        <p>You are not enrolled in any modules for the current semester.</p>
+        <a href="{{ url_for('register_module') }}" class="btn btn-primary">Register for Modules</a>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

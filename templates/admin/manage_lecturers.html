@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Lecturers - Admin{% endblock %}
+
+{% block page_title %}Manage Lecturers{% endblock %}
+
+{% block content %}
+<style>
+    .search-bar {
+        margin-bottom: 20px;
+        display: flex;
+        gap: 10px;
+    }
+    .search-bar input {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+    .action-buttons {
+        display: flex;
+        gap: 5px;
+    }
+    .btn-sm {
+        padding: 5px 10px;
+        font-size: 12px;
+    }
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 2000;
+        justify-content: center;
+        align-items: center;
+    }
+    .modal-content {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        max-width: 500px;
+        width: 90%;
+    }
+    .form-group {
+        margin-bottom: 15px;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+    }
+    .form-group input, .form-group select, .form-group textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+</style>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Lecturer Management</h3>
+    </div>
+    <div class="card-body">
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search by name, email, or ID..." onkeyup="filterTable()">
+            <button class="btn btn-primary" onclick="openAddModal()">+ Add New Lecturer</button>
+        </div>
+        
+        <div style="overflow-x: auto;">
+            <table id="lecturerTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Department</th>
+                        <th>Office Hours</th>
+                        <th>Courses</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="lecturerTableBody">
+                    {% for lecturer in lecturers %}
+                    <tr>
+                        <td>{{ lecturer.lecturer_id }}</td>
+                        <td>{{ lecturer.lecturer_name }}</td>
+                        <td>{{ lecturer.email }}</td>
+                        <td>{{ lecturer.department_name or 'Not assigned' }}</td>
+                        <td>{{ lecturer.office_hours or 'Not set' }}</td>
+                        <td>{{ lecturer.course_count }}</td>
+                        <td class="action-buttons">
+                            <button class="btn btn-primary btn-sm" onclick="editLecturer({{ lecturer.lecturer_id }})">Edit</button>
+                            <button class="btn btn-primary btn-sm" onclick="viewCourses({{ lecturer.lecturer_id }})">Courses</button>
+                            <button class="btn btn-primary btn-sm" onclick="deleteLecturer({{ lecturer.lecturer_id }})" style="background: #dc3545;">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Lecturer Modal -->
+<div id="lecturerModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">Add New Lecturer</h3>
+        </div>
+        <form id="lecturerForm" method="POST">
+            <input type="hidden" id="lecturer_id" name="lecturer_id">
+            <div class="form-group">
+                <label>Full Name *</label>
+                <input type="text" id="lecturer_name" name="lecturer_name" required>
+            </div>
+            <div class="form-group">
+                <label>Email *</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label>Password *</label>
+                <input type="password" id="password" name="password">
+                <small>Leave blank to keep existing password</small>
+            </div>
+            <div class="form-group">
+                <label>Department</label>
+                <select id="department_id" name="department_id">
+                    <option value="">Select Department</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept.department_id }}">{{ dept.department_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Office Hours</label>
+                <textarea id="office_hours" name="office_hours" rows="2" placeholder="e.g., Mon-Wed 10AM-12PM, Thu 2PM-4PM"></textarea>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" class="btn" onclick="closeModal()" style="background: #6c757d;">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function filterTable() {
+    const searchValue = document.getElementById('searchInput').value.toLowerCase();
+    const rows = document.getElementById('lecturerTableBody').getElementsByTagName('tr');
+    
+    for (let row of rows) {
+        const name = row.cells[1]?.innerText.toLowerCase() || '';
+        const email = row.cells[2]?.innerText.toLowerCase() || '';
+        row.style.display = name.includes(searchValue) || email.includes(searchValue) ? '' : 'none';
+    }
+}
+
+function openAddModal() {
+    document.getElementById('modalTitle').innerText = 'Add New Lecturer';
+    document.getElementById('lecturerForm').reset();
+    document.getElementById('lecturer_id').value = '';
+    document.getElementById('lecturerModal').style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('lecturerModal').style.display = 'none';
+}
+
+function editLecturer(id) {
+    fetch(`/admin/get_lecturer/${id}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('modalTitle').innerText = 'Edit Lecturer';
+            document.getElementById('lecturer_id').value = data.lecturer_id;
+            document.getElementById('lecturer_name').value = data.lecturer_name;
+            document.getElementById('email').value = data.email;
+            document.getElementById('department_id').value = data.department_id || '';
+            document.getElementById('office_hours').value = data.office_hours || '';
+            document.getElementById('lecturerModal').style.display = 'flex';
+        });
+}
+
+function viewCourses(id) {
+    window.location.href = `/admin/lecturer/${id}/courses`;
+}
+
+function deleteLecturer(id) {
+    if (confirm('Are you sure? This will remove the lecturer from all courses.')) {
+        fetch(`/admin/delete_lecturer/${id}`, { method: 'DELETE' })
+            .then(() => location.reload());
+    }
+}
+
+window.onclick = function(event) {
+    if (event.target === document.getElementById('lecturerModal')) {
+        closeModal();
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}Pending Applications - Admin{% endblock %}
+
+{% block page_title %}Pending Student Applications{% endblock %}
+
+{% block content %}
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    .stat-card {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .stat-number {
+        font-size: 28px;
+        font-weight: bold;
+        color: #2a5298;
+    }
+    .application-card {
+        background: white;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    .application-header {
+        padding: 20px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    .application-body {
+        padding: 20px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+    }
+    .application-section {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+    }
+    .application-section h4 {
+        color: #2a5298;
+        margin-bottom: 10px;
+    }
+    .btn-sm {
+        padding: 5px 15px;
+        font-size: 12px;
+        margin: 0 5px;
+    }
+    .doc-link {
+        color: #2a5298;
+        text-decoration: none;
+    }
+    .doc-link:hover {
+        text-decoration: underline;
+    }
+</style>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number">{{ pending_count }}</div>
+        <div class="stat-label">Pending Applications</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ total_applications }}</div>
+        <div class="stat-label">Total Applications</div>
+    </div>
+</div>
+
+{% for application in applications %}
+<div class="application-card">
+    <div class="application-header">
+        <div>
+            <h3>{{ application.student_name }}</h3>
+            <p>{{ application.email }} | Applied on: {{ application.registration_date }}</p>
+        </div>
+        <div>
+            <button class="btn btn-success btn-sm" onclick="approveApplication({{ application.student_id }})">✓ Approve</button>
+            <button class="btn btn-primary btn-sm" onclick="rejectApplication({{ application.student_id }})">✗ Reject</button>
+            <button class="btn btn-primary btn-sm" onclick="viewFullApplication({{ application.student_id }})">View Details</button>
+        </div>
+    </div>
+    
+    <div class="application-body">
+        <div class="application-section">
+            <h4>🎓 Program Applications</h4>
+            <ol>
+                {% for prog in application.programs %}
+                <li>{{ prog.department_name }} ({{ prog.department_code }}) - Priority {{ prog.priority_order }}</li>
+                {% endfor %}
+            </ol>
+            <p><strong>Self-sponsored:</strong> {{ 'Yes' if application.is_self_sponsored else 'No' }}</p>
+        </div>
+        
+        <div class="application-section">
+            <h4>👨‍👩‍👧 Next of Kin</h4>
+            <p><strong>Name:</strong> {{ application.kin_name }}</p>
+            <p><strong>Relationship:</strong> {{ application.kin_relationship }}</p>
+            <p><strong>Phone:</strong> {{ application.kin_phone }}</p>
+            <p><strong>Email:</strong> {{ application.kin_email or 'Not provided' }}</p>
+        </div>
+        
+        <div class="application-section">
+            <h4>📄 Documents</h4>
+            {% for doc in application.documents %}
+            <p>
+                <strong>{{ doc.document_type }}:</strong> 
+                <a href="{{ url_for('download_file', filename=doc.file_path.split('/')[-1]) }}" class="doc-link" target="_blank">Download</a>
+            </p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body" style="text-align: center; padding: 50px;">
+        <p>No pending applications found.</p>
+    </div>
+</div>
+{% endfor %}
+
+<!-- View Application Modal -->
+<div id="viewModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center;">
+    <div class="modal-content" style="background: white; padding: 30px; border-radius: 12px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
+        <div class="modal-header" style="margin-bottom: 20px;">
+            <h3 id="viewModalTitle">Application Details</h3>
+        </div>
+        <div id="viewModalContent"></div>
+        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+            <button class="btn" onclick="closeViewModal()" style="background: #6c757d;">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function approveApplication(studentId) {
+    if (confirm('Approve this student application?')) {
+        fetch(`/admin/approve_application/${studentId}`, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            });
+    }
+}
+
+function rejectApplication(studentId) {
+    const reason = prompt('Please provide a reason for rejection:');
+    if (reason) {
+        fetch(`/admin/reject_application/${studentId}`, { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason: reason })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        });
+    }
+}
+
+function viewFullApplication(studentId) {
+    fetch(`/admin/get_application_details/${studentId}`)
+        .then(response => response.json())
+        .then(data => {
+            let html = `
+                <div class="application-section">
+                    <h4>Personal Information</h4>
+                    <p><strong>Name:</strong> ${data.student_name}</p>
+                    <p><strong>Email:</strong> ${data.email}</p>
+                    <p><strong>Level:</strong> ${data.level}</p>
+                    <p><strong>Registration Date:</strong> ${data.registration_date}</p>
+                </div>
+                <div class="application-section">
+                    <h4>Programs Applied</h4>
+                    <ol>
+                        ${data.programs.map(p => `<li>${p.department_name} (Priority ${p.priority_order})</li>`).join('')}
+                    </ol>
+                </div>
+                <div class="application-section">
+                    <h4>Next of Kin</h4>
+                    <p><strong>Name:</strong> ${data.kin_name}</p>
+                    <p><strong>Relationship:</strong> ${data.kin_relationship}</p>
+                    <p><strong>Phone:</strong> ${data.kin_phone}</p>
+                    <p><strong>Email:</strong> ${data.kin_email || 'Not provided'}</p>
+                    <p><strong>Address:</strong> ${data.kin_address || 'Not provided'}</p>
+                </div>
+            `;
+            document.getElementById('viewModalContent').innerHTML = html;
+            document.getElementById('viewModal').style.display = 'flex';
+        });
+}
+
+function closeViewModal() {
+    document.getElementById('viewModal').style.display = 'none';
+}
+
+window.onclick = function(event) {
+    if (event.target === document.getElementById('viewModal')) {
+        closeViewModal();
+    }
+}
+</script>
+
+<style>
+.modal {
+    display: none;
+}
+.application-section {
+    margin-bottom: 15px;
+}
+.application-section h4 {
+    color: #2a5298;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+}
+</style>
+{% endblock %}

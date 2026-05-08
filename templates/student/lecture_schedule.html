@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Lecture Schedule{% endblock %}
+
+{% block page_title %}Weekly Lecture Schedule{% endblock %}
+
+{% block content %}
+<style>
+    .schedule-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+    }
+    
+    .day-card {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .day-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px;
+        font-weight: bold;
+        text-align: center;
+    }
+    
+    .lecture-slot {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .lecture-slot:last-child {
+        border-bottom: none;
+    }
+    
+    .lecture-time {
+        font-weight: bold;
+        color: #2a5298;
+        margin-bottom: 5px;
+    }
+    
+    .lecture-name {
+        font-size: 14px;
+        margin-bottom: 5px;
+    }
+    
+    .lecture-details {
+        font-size: 12px;
+        color: #666;
+    }
+    
+    .empty-day {
+        text-align: center;
+        padding: 30px;
+        color: #999;
+    }
+</style>
+
+<div class="schedule-grid">
+    {% for day, lectures in schedule_by_day.items() %}
+    <div class="day-card">
+        <div class="day-header">{{ day }}</div>
+        <div>
+            {% if lectures %}
+                {% for lecture in lectures %}
+                <div class="lecture-slot">
+                    <div class="lecture-time">
+                        {% if lecture.lecture_time %}
+                            ⏰ {{ lecture.lecture_time.strftime('%I:%M %p') if lecture.lecture_time else lecture.lecture_time }}
+                        {% else %}
+                            ⏰ Time TBA
+                        {% endif %}
+                    </div>
+                    <div class="lecture-name">
+                        <strong>{{ lecture.module_name }}</strong> ({{ lecture.module_code }})
+                    </div>
+                    <div class="lecture-details">
+                        👨‍🏫 {{ lecture.lecturer_name or 'Staff TBA' }}<br>
+                        📍 {{ lecture.venue or 'Venue TBA' }}
+                        {% if lecture.duration %}
+                        | ⏱️ {{ lecture.duration }} hours
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-day">
+                    No lectures scheduled
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="card" style="margin-top: 20px;">
+    <div class="card-header">
+        <h3>📌 Lecture Schedule Notes</h3>
+    </div>
+    <div class="card-body">
+        <ul style="margin-left: 20px; line-height: 1.8;">
+            <li>Please check your schedule regularly for updates</li>
+            <li>Lecture venues are subject to change - check university portal before each class</li>
+            <li>Contact your lecturer if you have questions about course content</li>
+            <li>Attendance is mandatory for all lectures</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

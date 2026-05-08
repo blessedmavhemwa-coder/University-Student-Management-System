@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block page_title %}Administrator Dashboard{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number">{{ student_count }}</div>
+        <div class="stat-label">Total Students</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ pending_count }}</div>
+        <div class="stat-label">Pending Applications</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ lecturer_count }}</div>
+        <div class="stat-label">Total Lecturers</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ module_count }}</div>
+        <div class="stat-label">Active Modules</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>System Overview</h3>
+    </div>
+    <div class="card-body">
+        <p><strong>Database Status:</strong> ✅ Connected</p>
+        <p><strong>Current Semester:</strong> Fall 2024</p>
+        <p><strong>Registration Period:</strong> Active</p>
+        <p><strong>System Version:</strong> 1.0</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Quick Actions</h3>
+    </div>
+    <div class="card-body">
+        <a href="#" class="btn btn-primary">Manage Students</a>
+        <a href="#" class="btn btn-primary" style="margin-left: 10px;">Manage Lecturers</a>
+        <a href="#" class="btn btn-primary" style="margin-left: 10px;">View Reports</a>
+    </div>
+</div>
+{% endblock %}

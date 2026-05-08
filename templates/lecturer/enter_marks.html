@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}Enter Marks - Lecturer{% endblock %}
+
+{% block page_title %}Enter Student Marks{% endblock %}
+
+{% block content %}
+<style>
+    .form-section {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .grade-select {
+        width: 80px;
+        padding: 5px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+    }
+    
+    .grade-a { background-color: #d4edda; color: #155724; }
+    .grade-b { background-color: #d1ecf1; color: #0c5460; }
+    .grade-c { background-color: #fff3cd; color: #856404; }
+    .grade-d { background-color: #ffeaa7; color: #856404; }
+    .grade-e { background-color: #f8d7da; color: #721c24; }
+    .grade-f { background-color: #f8d7da; color: #721c24; }
+    
+    .quick-actions {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .search-box {
+        margin-bottom: 20px;
+    }
+    
+    .search-box input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+</style>
+
+<div class="form-section">
+    <h3>Select Course</h3>
+    <form method="GET" action="{{ url_for('lecturer_enter_marks') }}">
+        <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 15px; align-items: end;">
+            <div class="form-group">
+                <label>Select Module</label>
+                <select name="module_id" required class="form-control">
+                    <option value="">-- Select Module --</option>
+                    {% for course in courses %}
+                    <option value="{{ course.module_id }}" {% if selected_module|string == course.module_id|string %}selected{% endif %}>
+                        {{ course.module_name }} ({{ course.module_code }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Semester</label>
+                <select name="semester" required class="form-control">
+                    <option value="">-- Select Semester --</option>
+                    <option value="Fall 2024" {% if selected_semester == 'Fall 2024' %}selected{% endif %}>Fall 2024</option>
+                    <option value="Spring 2025" {% if selected_semester == 'Spring 2025' %}selected{% endif %}>Spring 2025</option>
+                </select>
+            </div>
+            <div>
+                <button type="submit" class="btn btn-primary">Load Students</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% if students %}
+<div class="form-section">
+    <h3>Student Marks Entry</h3>
+    
+    <div class="quick-actions">
+        <button onclick="setAllGrades('A')" class="btn btn-primary btn-sm">Set All to A</button>
+        <button onclick="setAllGrades('B')" class="btn btn-primary btn-sm">Set All to B</button>
+        <button onclick="setAllGrades('C')" class="btn btn-primary btn-sm">Set All to C</button>
+        <button onclick="setAllGrades('D')" class="btn btn-primary btn-sm">Set All to D</button>
+        <button onclick="setAllGrades('E')" class="btn btn-primary btn-sm">Set All to E</button>
+        <button onclick="setAllGrades('F')" class="btn btn-primary btn-sm">Set All to F</button>
+        <button onclick="clearAllGrades()" class="btn btn-danger btn-sm">Clear All</button>
+    </div>
+    
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Search by student name or ID..." onkeyup="filterStudents()">
+    </div>
+    
+    <form method="POST" id="marksForm">
+        <input type="hidden" name="module_id" value="{{ selected_module }}">
+        <input type="hidden" name="semester" value="{{ selected_semester }}">
+        
+        <div style="overflow-x: auto;">
+            <table id="studentsTable">
+                <thead>
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Student Name</th>
+                        <th>Email</th>
+                        <th>Current Grade</th>
+                        <th>New Grade</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr data-student-name="{{ student.student_name|lower }}">
+                        <td>{{ student.student_id }}</td>
+                        <td>{{ student.student_name }}</td>
+                        <td>{{ student.email }}</td>
+                        <td>
+                            {% if student.current_grade %}
+                            <span class="badge grade-{{ student.current_grade|lower }}">{{ student.current_grade }}</span>
+                            {% else %}
+                            <span class="badge badge-warning">Not Entered</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <select name="grade_{{ student.student_id }}" class="grade-select" data-student-id="{{ student.student_id }}">
+                                <option value="">-- Select --</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                                <option value="D">D</option>
+                                <option value="E">E</option>
+                                <option value="F">F</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button type="button" onclick="submitGrade({{ student.student_id }}, '{{ selected_module }}', '{{ selected_semester }}')" class="btn btn-primary btn-sm">
+                                Save Grade
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div style="margin-top: 20px; text-align: center;">
+            <button type="submit" class="btn btn-success">Save All Grades</button>
+        </div>
+    </form>
+</div>
+{% elif selected_module %}
+<div class="card">
+    <div class="card-body" style="text-align: center; padding: 50px;">
+        <p>No students enrolled in this course for the selected semester.</p>
+    </div>
+</div>
+{% endif %}
+
+<script>
+function filterStudents() {
+    const searchValue = document.getElementById('searchInput').value.toLowerCase();
+    const rows = document.getElementById('studentsTable').getElementsByTagName('tr');
+    
+    for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const studentName = row.getAttribute('data-student-name') || '';
+        const studentId = row.cells[0]?.innerText || '';
+        
+        if (studentName.includes(searchValue) || studentId.includes(searchValue)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    }
+}
+
+function setAllGrades(grade) {
+    const selects = document.querySelectorAll('.grade-select');
+    selects.forEach(select => {
+        select.value = grade;
+    });
+}
+
+function clearAllGrades() {
+    const selects = document.querySelectorAll('.grade-select');
+    selects.forEach(select => {
+        select.value = '';
+    });
+}
+
+function submitGrade(studentId, moduleId, semester) {
+    const select = document.querySelector(`select[data-student-id="${studentId}"]`);
+    const grade = select.value;
+    
+    if (!grade) {
+        alert('Please select a grade first');
+        return;
+    }
+    
+    fetch('/lecturer/update_grade', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            student_id: studentId,
+            module_id: moduleId,
+            semester: semester,
+            grade: grade
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update the current grade display
+            const gradeCell = document.querySelector(`tr[data-student-name] .badge`);
+            if (gradeCell) {
+                gradeCell.className = `badge grade-${grade.toLowerCase()}`;
+                gradeCell.textContent = grade;
+            }
+            alert('Grade saved successfully!');
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Error saving grade: ' + error);
+    });
+}
+</script>
+{% endblock %}

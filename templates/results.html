@@ -1,0 +1,188 @@
+<!-- templates/results.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Results - University Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .navbar h2 {
+            font-size: 20px;
+        }
+
+        .navbar .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .back-btn, .logout-btn {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            color: white;
+            transition: background 0.2s;
+        }
+
+        .back-btn:hover, .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .results-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .results-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+        }
+
+        .results-header h3 {
+            font-size: 24px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #f8f9fa;
+            color: #333;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        .grade {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .grade-A { color: #4caf50; }
+        .grade-B { color: #2196f3; }
+        .grade-C { color: #ff9800; }
+        .grade-D { color: #ff5722; }
+        .grade-E { color: #f44336; }
+        .grade-F { color: #9e9e9e; }
+
+        .empty-message {
+            text-align: center;
+            padding: 60px;
+            color: #999;
+        }
+
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+
+        .flash-message {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .flash-message.error {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h2>My Academic Results</h2>
+        <div class="user-info">
+            <a href="/home" class="back-btn">← Back to Dashboard</a>
+            <a href="/logout" class="logout-btn">Logout</a>
+        </div>
+    </div>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="results-card">
+            <div class="results-header">
+                <h3>Your Results</h3>
+                <p>Academic performance across all semesters</p>
+            </div>
+
+            {% if results %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Module Name</th>
+                            <th>Semester</th>
+                            <th>Grade</th>
+                            <th>Lecturer</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in results %}
+                            <tr>
+                                <td>{{ result.module_name }}</td>
+                                <td>{{ result.semester }}</td>
+                                <td class="grade grade-{{ result.grade }}">{{ result.grade }}</td>
+                                <td>{{ result.lecturer_name }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="empty-message">
+                    <p>No results available yet.</p>
+                    <p style="margin-top: 10px; font-size: 14px;">Results will be displayed here once they are published.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

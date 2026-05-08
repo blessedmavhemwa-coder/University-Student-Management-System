@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Modules - Admin{% endblock %}
+
+{% block page_title %}Manage Modules{% endblock %}
+
+{% block content %}
+<style>
+    .search-bar {
+        margin-bottom: 20px;
+        display: flex;
+        gap: 10px;
+    }
+    .search-bar input {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 2000;
+        justify-content: center;
+        align-items: center;
+    }
+    .modal-content {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        max-width: 500px;
+        width: 90%;
+    }
+    .form-group {
+        margin-bottom: 15px;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+    }
+    .form-group input, .form-group select {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+    .btn-sm {
+        padding: 5px 10px;
+        font-size: 12px;
+    }
+    .action-buttons {
+        display: flex;
+        gap: 5px;
+    }
+</style>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Module Management</h3>
+    </div>
+    <div class="card-body">
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search by module name, code, or department..." onkeyup="filterTable()">
+            <select id="deptFilter" onchange="filterTable()" style="padding: 10px; border-radius: 5px;">
+                <option value="">All Departments</option>
+                {% for dept in departments %}
+                <option value="{{ dept.department_name }}">{{ dept.department_name }}</option>
+                {% endfor %}
+            </select>
+            <button class="btn btn-primary" onclick="openAddModal()">+ Add New Module</button>
+        </div>
+        
+        <div style="overflow-x: auto;">
+            <table id="moduleTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Module Name</th>
+                        <th>Module Code</th>
+                        <th>Credits</th>
+                        <th>Department</th>
+                        <th>Lecturer</th>
+                        <th>Enrolled Students</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="moduleTableBody">
+                    {% for module in modules %}
+                    <tr>
+                        <td>{{ module.module_id }}</td>
+                        <td>{{ module.module_name }}</td>
+                        <td>{{ module.module_code }}</td>
+                        <td>{{ module.credits }}</td>
+                        <td>{{ module.department_name }}</td>
+                        <td>{{ module.lecturer_name or 'Not assigned' }}</td>
+                        <td>{{ module.enrolled_count }}</td>
+                        <td class="action-buttons">
+                            <button class="btn btn-primary btn-sm" onclick="editModule({{ module.module_id }})">Edit</button>
+                            <button class="btn btn-primary btn-sm" onclick="assignLecturer({{ module.module_id }})">Assign Lecturer</button>
+                            <button class="btn btn-primary btn-sm" onclick="deleteModule({{ module.module_id }})" style="background: #dc3545;">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Module Modal -->
+<div id="moduleModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">Add New Module</h3>
+        </div>
+        <form id="moduleForm" method="POST">
+            <input type="hidden" id="module_id" name="module_id">
+            <div class="form-group">
+                <label>Module Name *</label>
+                <input type="text" id="module_name" name="module_name" required>
+            </div>
+            <div class="form-group">
+                <label>Module Code *</label>
+                <input type="text" id="module_code" name="module_code" required>
+            </div>
+            <div class="form-group">
+                <label>Credits (5-30) *</label>
+                <input type="number" id="credits" name="credits" min="5" max="30" required>
+            </div>
+            <div class="form-group">
+                <label>Department *</label>
+                <select id="department_id" name="department_id" required>
+                    <option value="">Select Department</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept.department_id }}">{{ dept.department_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" class="btn" onclick="closeModal()" style="background: #6c757d;">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Assign Lecturer Modal -->
+<div id="assignModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Assign Lecturer to Module</h3>
+        </div>
+        <form id="assignForm" method="POST">
+            <input type="hidden" id="assign_module_id" name="module_id">
+            <div class="form-group">
+                <label>Select Lecturer</label>
+                <select id="lecturer_id" name="lecturer_id" required>
+                    <option value="">Select Lecturer</option>
+                    {% for lecturer in all_lecturers %}
+                    <option value="{{ lecturer.lecturer_id }}">{{ lecturer.lecturer_name }} ({{ lecturer.department_name }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Semester</label>
+                <select id="semester" name="semester" required>
+                    <option value="Fall 2024">Fall 2024</option>
+                    <option value="Spring 2025">Spring 2025</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" class="btn" onclick="closeAssignModal()" style="background: #6c757d;">Cancel</button>
+                <button type="submit" class="btn btn-primary">Assign</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function filterTable() {
+    const searchValue = document.getElementById('searchInput').value.toLowerCase();
+    const deptFilter = document.getElementById('deptFilter').value;
+    const rows = document.getElementById('moduleTableBody').getElementsByTagName('tr');
+    
+    for (let row of rows) {
+        const name = row.cells[1]?.innerText.toLowerCase() || '';
+        const code = row.cells[2]?.innerText.toLowerCase() || '';
+        const dept = row.cells[4]?.innerText || '';
+        
+        const matchesSearch = name.includes(searchValue) || code.includes(searchValue);
+        const matchesDept = !deptFilter || dept === deptFilter;
+        
+        row.style.display = matchesSearch && matchesDept ? '' : 'none';
+    }
+}
+
+function openAddModal() {
+    document.getElementById('modalTitle').innerText = 'Add New Module';
+    document.getElementById('moduleForm').reset();
+    document.getElementById('module_id').value = '';
+    document.getElementById('moduleModal').style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('moduleModal').style.display = 'none';
+}
+
+function editModule(id) {
+    fetch(`/admin/get_module/${id}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('modalTitle').innerText = 'Edit Module';
+            document.getElementById('module_id').value = data.module_id;
+            document.getElementById('module_name').value = data.module_name;
+            document.getElementById('module_code').value = data.module_code;
+            document.getElementById('credits').value = data.credits;
+            document.getElementById('department_id').value = data.department_id;
+            document.getElementById('moduleModal').style.display = 'flex';
+        });
+}
+
+function assignLecturer(moduleId) {
+    document.getElementById('assign_module_id').value = moduleId;
+    document.getElementById('assignModal').style.display = 'flex';
+}
+
+function closeAssignModal() {
+    document.getElementById('assignModal').style.display = 'none';
+}
+
+function deleteModule(id) {
+    if (confirm('Are you sure? This will delete the module and all enrollments.')) {
+        fetch(`/admin/delete_module/${id}`, { method: 'DELETE' })
+            .then(() => location.reload());
+    }
+}
+
+window.onclick = function(event) {
+    if (event.target === document.getElementById('moduleModal')) {
+        closeModal();
+    }
+    if (event.target === document.getElementById('assignModal')) {
+        closeAssignModal();
+    }
+}
+</script>
+{% endblock %}

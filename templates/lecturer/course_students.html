@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Course Students - Lecturer{% endblock %}
+
+{% block page_title %}{{ course.module_name }} ({{ course.module_code }}) - Students{% endblock %}
+
+{% block content %}
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .search-box {
+        margin-bottom: 20px;
+    }
+    
+    .search-box input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+    
+    .grade-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 12px;
+    }
+    
+    .grade-A { background: #d4edda; color: #155724; }
+    .grade-B { background: #d1ecf1; color: #0c5460; }
+    .grade-C { background: #fff3cd; color: #856404; }
+    .grade-D { background: #ffeaa7; color: #856404; }
+    .grade-E { background: #f8d7da; color: #721c24; }
+    .grade-F { background: #f8d7da; color: #721c24; }
+    .grade-None { background: #e2e3e5; color: #383d41; }
+</style>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number">{{ students|length }}</div>
+        <div class="stat-label">Total Students</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">
+            {{ students|selectattr('grade')|list|length }}
+        </div>
+        <div class="stat-label">Graded Students</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">
+            {{ students|rejectattr('grade')|list|length }}
+        </div>
+        <div class="stat-label">Pending Grades</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Course Information</h3>
+    </div>
+    <div class="card-body">
+        <p><strong>Department:</strong> {{ course.department_name }}</p>
+        <p><strong>Credits:</strong> {{ course.credits }}</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Enrolled Students</h3>
+    </div>
+    <div class="card-body">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search by student name or ID..." onkeyup="filterStudents()">
+        </div>
+        
+        <div style="overflow-x: auto;">
+            <table id="studentsTable">
+                <thead>
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Student Name</th>
+                        <th>Email</th>
+                        <th>Level</th>
+                        <th>Enrollment Date</th>
+                        <th>Grade</th>
+                        <th>Semester</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr>
+                        <td>{{ student.student_id }}</td>
+                        <td>{{ student.student_name }}</td>
+                        <td>{{ student.email }}</td>
+                        <td>{{ student.level }}</td>
+                        <td>{{ student.enrollment_date }}</td>
+                        <td>
+                            {% if student.grade %}
+                            <span class="grade-badge grade-{{ student.grade }}">{{ student.grade }}</span>
+                            {% else %}
+                            <span class="grade-badge grade-None">Not Graded</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ student.semester or 'N/A' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+function filterStudents() {
+    const searchValue = document.getElementById('searchInput').value.toLowerCase();
+    const rows = document.getElementById('studentsTable').getElementsByTagName('tr');
+    
+    for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const studentName = row.cells[1]?.innerText.toLowerCase() || '';
+        const studentId = row.cells[0]?.innerText || '';
+        
+        if (studentName.includes(searchValue) || studentId.includes(searchValue)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    }
+}
+</script>
+{% endblock %}

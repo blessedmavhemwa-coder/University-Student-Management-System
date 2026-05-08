@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Accommodation{% endblock %}
+
+{% block page_title %}Accommodation Management{% endblock %}
+
+{% block content %}
+<style>
+    .accommodation-card {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .space-card {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .status-confirmed {
+        color: #28a745;
+        font-weight: bold;
+    }
+
+    .status-waiting {
+        color: #ffc107;
+        font-weight: bold;
+    }
+
+    .status-none {
+        color: #dc3545;
+    }
+
+    .waitlist-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .waitlist-position {
+        font-size: 48px;
+        font-weight: bold;
+        text-align: center;
+    }
+
+    .btn-waitlist {
+        background: #ffc107;
+        color: #333;
+        padding: 12px 25px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-waitlist:hover {
+        background: #e0a800;
+        transform: translateY(-2px);
+    }
+
+    .info-box {
+        background: #d1ecf1;
+        border: 1px solid #bee5eb;
+        color: #0c5460;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 15px;
+    }
+</style>
+
+{% if current_accommodation %}
+<div class="accommodation-card">
+    <h3>🏠 Your Current Accommodation</h3>
+    <p><strong>Building:</strong> {{ current_accommodation.building_name }}</p>
+    <p><strong>Room Number:</strong> {{ current_accommodation.room_number or current_accommodation.space_room }}</p>
+    <p><strong>Status:</strong> <span class="status-confirmed">✓ Confirmed</span></p>
+    <button class="btn btn-danger" onclick="alert('Please contact accommodation office to cancel')">Request Cancellation</button>
+</div>
+{% else %}
+<div class="accommodation-card">
+    <h3>🏠 Accommodation Status</h3>
+    <p>You currently do not have on-campus accommodation.</p>
+    {% if on_waitlist %}
+    <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-top: 15px;">
+        <p><strong>Waitlist Status:</strong> <span class="status-waiting">✓ You are on the waiting list</span></p>
+        <p><strong>Your Position:</strong> #{{ waitlist_position }} in line</p>
+        <p>We will notify you via email when a space becomes available.</p>
+        <button class="btn btn-danger btn-sm" onclick="confirmRemoveFromWaitlist()" style="margin-top: 10px;">Remove from Waitlist</button>
+    </div>
+    {% else %}
+    <p><strong>Status:</strong> <span class="status-none">Not Applied</span></p>
+    {% endif %}
+</div>
+
+{% if available_spaces and not on_waitlist %}
+<div class="accommodation-card">
+    <h3>🏢 Available Accommodation Spaces</h3>
+    {% for space in available_spaces %}
+    <div class="space-card">
+        <div>
+            <strong>{{ space.building_name }}</strong> - Room {{ space.room_number }}
+        </div>
+        <form method="POST" action="{{ url_for('student_apply_accommodation') }}">
+            <input type="hidden" name="space_id" value="{{ space.space_id }}">
+            <button type="submit" class="btn btn-success">Apply Now</button>
+        </form>
+    </div>
+    {% endfor %}
+</div>
+{% elif not on_waitlist %}
+<div class="accommodation-card waitlist-card">
+    <h3>🏢 No Available Spaces</h3>
+    <p>All accommodation spaces are currently occupied.</p>
+    <div style="text-align: center; margin: 20px 0;">
+        <div class="waitlist-position">{{ waitlist_position + 1 if waitlist_position else 1 }}</div>
+        <p>People currently waiting</p>
+    </div>
+    <div style="text-align: center;">
+        <a href="{{ url_for('student_join_waitlist') }}" class="btn-waitlist">📝 Join Waiting List</a>
+    </div>
+    <p style="margin-top: 15px; font-size: 14px; text-align: center;">Join the waitlist to be notified when accommodation becomes available.</p>
+</div>
+{% endif %}
+{% endif %}
+
+<div class="accommodation-card">
+    <h3>📋 Accommodation Information</h3>
+    <ul style="margin-left: 20px; line-height: 1.8;">
+        <li>Accommodation applications are processed on a first-come, first-served basis</li>
+        <li>Priority is given to international and out-of-town students</li>
+        <li>Accommodation fees are billed per semester</li>
+        <li>For inquiries, contact: accommodation@university.edu or call +123 456 7890</li>
+        <li>Check-in time: 2:00 PM - 6:00 PM on weekdays</li>
+    </ul>
+</div>
+{% endblock %}

@@ -1,0 +1,254 @@
+<!-- templates/register_module.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register for Modules - University Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .navbar h2 {
+            font-size: 20px;
+        }
+
+        .navbar .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .back-btn, .logout-btn {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            color: white;
+            transition: background 0.2s;
+        }
+
+        .back-btn:hover, .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .register-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .register-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+        }
+
+        .register-header h3 {
+            font-size: 24px;
+        }
+
+        .module-form {
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .register-btn {
+            background: #4caf50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.2s;
+        }
+
+        .register-btn:hover {
+            background: #45a049;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #f8f9fa;
+            color: #333;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+
+        .flash-message {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .flash-message.error {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+
+        .flash-message.success {
+            background: #efe;
+            color: #3c3;
+            border: 1px solid #cfc;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h2>Module Registration</h2>
+        <div class="user-info">
+            <a href="/home" class="back-btn">← Back to Dashboard</a>
+            <a href="/logout" class="logout-btn">Logout</a>
+        </div>
+    </div>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="register-card">
+            <div class="register-header">
+                <h3>Available Modules for Registration</h3>
+                <p>Select a module to register for Fall 2024 semester</p>
+            </div>
+
+            <div class="module-form">
+                <form method="POST">
+                    <div class="form-group">
+                        <label>Select Module:</label>
+                        <select name="module_id" required>
+                            <option value="">-- Select a module --</option>
+                            {% for module in modules %}
+                                <option value="{{ module.module_id }}">
+                                    {{ module.module_name }} ({{ module.module_code }}) -
+                                    {{ module.credits }} credits -
+                                    Dept: {{ module.department_name }}
+                                    {% if module.lecturers %} - Lecturers: {{ module.lecturers }}{% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Semester:</label>
+                        <select name="semester" required>
+                            <option value="Fall 2024">Fall 2024</option>
+                            <option value="Spring 2025">Spring 2025</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="register-btn">Register for Module</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="register-card" style="margin-top: 20px;">
+            <div class="register-header">
+                <h3>Currently Registered Modules</h3>
+            </div>
+            {% if modules %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Module Name</th>
+                            <th>Code</th>
+                            <th>Credits</th>
+                            <th>Department</th>
+                            <th>Lecturers</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for module in modules %}
+                            <tr>
+                                <td>{{ module.module_name }}</td>
+                                <td>{{ module.module_code }}</td>
+                                <td>{{ module.credits }}</td>
+                                <td>{{ module.department_name }}</td>
+                                <td>{{ module.lecturers or 'Not assigned' }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="empty-message">
+                    <p>No modules available for registration.</p>
+                    <p style="margin-top: 10px; font-size: 14px;">Please contact your department coordinator.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

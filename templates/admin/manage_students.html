@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Students - Admin{% endblock %}
+
+{% block page_title %}Manage Students{% endblock %}
+
+{% block content %}
+<style>
+    .search-bar {
+        margin-bottom: 20px;
+        display: flex;
+        gap: 10px;
+    }
+    .search-bar input {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    .status-approved { background: #d4edda; color: #155724; }
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-rejected { background: #f8d7da; color: #721c24; }
+    .action-buttons {
+        display: flex;
+        gap: 5px;
+    }
+    .btn-sm {
+        padding: 5px 10px;
+        font-size: 12px;
+    }
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 2000;
+        justify-content: center;
+        align-items: center;
+    }
+    .modal-content {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        max-width: 500px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    .modal-header {
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #2a5298;
+    }
+    .form-group {
+        margin-bottom: 15px;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+    }
+    .form-group input, .form-group select {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+</style>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Student Management</h3>
+    </div>
+    <div class="card-body">
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search by name, email, or student ID..." onkeyup="filterTable()">
+            <select id="statusFilter" onchange="filterTable()" style="padding: 10px; border-radius: 5px;">
+                <option value="">All Status</option>
+                <option value="Approved">Approved</option>
+                <option value="Pending">Pending</option>
+                <option value="Rejected">Rejected</option>
+            </select>
+            <button class="btn btn-primary" onclick="openAddModal()">+ Add New Student</button>
+        </div>
+        
+        <div style="overflow-x: auto;">
+            <table id="studentTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Level</th>
+                        <th>Department</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="studentTableBody">
+                    {% for student in students %}
+                    <tr>
+                        <td>{{ student.student_id }}</td>
+                        <td>{{ student.student_name }}</td>
+                        <td>{{ student.email }}</td>
+                        <td>{{ student.level }}</td>
+                        <td>{{ student.department_name or 'Not assigned' }}</td>
+                        <td>
+                            <span class="status-badge status-{{ student.application_status|lower }}">
+                                {{ student.application_status }}
+                            </span>
+                        </td>
+                        <td class="action-buttons">
+                            <button class="btn btn-primary btn-sm" onclick="viewStudent({{ student.student_id }})">View</button>
+                            <button class="btn btn-primary btn-sm" onclick="editStudent({{ student.student_id }})">Edit</button>
+                            <button class="btn btn-primary btn-sm" onclick="approveStudent({{ student.student_id }})">Approve</button>
+                            <button class="btn btn-primary btn-sm" onclick="deleteStudent({{ student.student_id }})" style="background: #dc3545;">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Student Modal -->
+<div id="studentModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">Add New Student</h3>
+        </div>
+        <form id="studentForm" method="POST">
+            <input type="hidden" id="student_id" name="student_id">
+            <div class="form-group">
+                <label>Full Name *</label>
+                <input type="text" id="student_name" name="student_name" required>
+            </div>
+            <div class="form-group">
+                <label>Email *</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label>Password *</label>
+                <input type="password" id="password" name="password">
+                <small>Leave blank to keep existing password</small>
+            </div>
+            <div class="form-group">
+                <label>Level</label>
+                <select id="level" name="level">
+                    <option value="Undergraduate">Undergraduate</option>
+                    <option value="Postgraduate">Postgraduate</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Department</label>
+                <select id="department_id" name="department_id">
+                    <option value="">Select Department</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept.department_id }}">{{ dept.department_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Application Status</label>
+                <select id="application_status" name="application_status">
+                    <option value="Pending">Pending</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Rejected">Rejected</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" class="btn" onclick="closeModal()" style="background: #6c757d;">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function filterTable() {
+    const searchValue = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const rows = document.getElementById('studentTableBody').getElementsByTagName('tr');
+    
+    for (let row of rows) {
+        const name = row.cells[1]?.innerText.toLowerCase() || '';
+        const email = row.cells[2]?.innerText.toLowerCase() || '';
+        const status = row.cells[5]?.innerText || '';
+        
+        const matchesSearch = name.includes(searchValue) || email.includes(searchValue);
+        const matchesStatus = !statusFilter || status === statusFilter;
+        
+        row.style.display = matchesSearch && matchesStatus ? '' : 'none';
+    }
+}
+
+function openAddModal() {
+    document.getElementById('modalTitle').innerText = 'Add New Student';
+    document.getElementById('studentForm').reset();
+    document.getElementById('student_id').value = '';
+    document.getElementById('studentModal').style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('studentModal').style.display = 'none';
+}
+
+function viewStudent(id) {
+    window.location.href = `/admin/student/${id}`;
+}
+
+function editStudent(id) {
+    fetch(`/admin/get_student/${id}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('modalTitle').innerText = 'Edit Student';
+            document.getElementById('student_id').value = data.student_id;
+            document.getElementById('student_name').value = data.student_name;
+            document.getElementById('email').value = data.email;
+            document.getElementById('level').value = data.level;
+            document.getElementById('department_id').value = data.department_id || '';
+            document.getElementById('application_status').value = data.application_status;
+            document.getElementById('studentModal').style.display = 'flex';
+        });
+}
+
+function approveStudent(id) {
+    if (confirm('Approve this student?')) {
+        fetch(`/admin/approve_student/${id}`, { method: 'POST' })
+            .then(() => location.reload());
+    }
+}
+
+function deleteStudent(id) {
+    if (confirm('Are you sure? This will delete all student data.')) {
+        fetch(`/admin/delete_student/${id}`, { method: 'DELETE' })
+            .then(() => location.reload());
+    }
+}
+
+window.onclick = function(event) {
+    if (event.target === document.getElementById('studentModal')) {
+        closeModal();
+    }
+}
+</script>
+{% endblock %}

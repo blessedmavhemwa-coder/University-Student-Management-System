@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block title %}Fee Management - Admin{% endblock %}
+
+{% block page_title %}Fee Management{% endblock %}
+
+{% block content %}
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    .stat-card {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .stat-number {
+        font-size: 28px;
+        font-weight: bold;
+        color: #2a5298;
+    }
+    .search-bar {
+        margin-bottom: 20px;
+        display: flex;
+        gap: 10px;
+    }
+    .search-bar input {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 2000;
+        justify-content: center;
+        align-items: center;
+    }
+    .modal-content {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        max-width: 500px;
+        width: 90%;
+    }
+    .form-group {
+        margin-bottom: 15px;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+    }
+    .form-group input, .form-group select {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+    .btn-sm {
+        padding: 5px 10px;
+        font-size: 12px;
+    }
+    .paid { color: #28a745; font-weight: bold; }
+    .partial { color: #ffc107; font-weight: bold; }
+    .pending { color: #dc3545; font-weight: bold; }
+</style>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number">${{ "%.2f"|format(total_revenue) }}</div>
+        <div class="stat-label">Total Revenue</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">${{ "%.2f"|format(total_outstanding) }}</div>
+        <div class="stat-label">Total Outstanding</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ paid_count }}</div>
+        <div class="stat-label">Fully Paid Students</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ pending_count }}</div>
+        <div class="stat-label">Pending Payments</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Student Fee Records</h3>
+    </div>
+    <div class="card-body">
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search by student name or ID..." onkeyup="filterTable()">
+            <select id="statusFilter" onchange="filterTable()" style="padding: 10px; border-radius: 5px;">
+                <option value="">All Status</option>
+                <option value="Paid">Paid</option>
+                <option value="Partial">Partial</option>
+                <option value="Pending">Pending</option>
+            </select>
+            <button class="btn btn-primary" onclick="openAddModal()">+ Add Fee Record</button>
+        </div>
+        
+        <div style="overflow-x: auto;">
+            <table id="feeTable">
+                <thead>
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Student Name</th>
+                        <th>Amount Due</th>
+                        <th>Amount Paid</th>
+                        <th>Outstanding</th>
+                        <th>Status</th>
+                        <th>Due Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="feeTableBody">
+                    {% for fee in fees %}
+                    <tr>
+                        <td>{{ fee.student_id }}</td>
+                        <td>{{ fee.student_name }}</td>
+                        <td>${{ "%.2f"|format(fee.amount_due) }}</td>
+                        <td>${{ "%.2f"|format(fee.amount_paid) }}</td>
+                        <td>${{ "%.2f"|format(fee.amount_due - fee.amount_paid) }}</td>
+                        <td class="{{ fee.status|lower }}">{{ fee.status }}</td>
+                        <td>{{ fee.due_date }}</td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" onclick="recordPayment({{ fee.fee_id }}, {{ fee.student_id }})">Record Payment</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Fee Modal -->
+<div id="feeModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Add Fee Record</h3>
+        </div>
+        <form id="feeForm" method="POST">
+            <div class="form-group">
+                <label>Student *</label>
+                <select id="student_id" name="student_id" required>
+                    <option value="">Select Student</option>
+                    {% for student in students %}
+                    <option value="{{ student.student_id }}">{{ student.student_name }} ({{ student.email }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Amount Due *</label>
+                <input type="number" id="amount_due" name="amount_due" step="0.01" required>
+            </div>
+            <div class="form-group">
+                <label>Due Date</label>
+                <input type="date" id="due_date" name="due_date">
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" class="btn" onclick="closeModal()" style="background: #6c757d;">Cancel</button>
+                <button type="submit" class="btn btn-primary">Add</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Payment Modal -->
+<div id="paymentModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Record Payment</h3>
+        </div>
+        <form id="paymentForm" method="POST" action="/admin/record_payment">
+            <input type="hidden" id="payment_fee_id" name="fee_id">
+            <div class="form-group">
+                <label>Payment Amount *</label>
+                <input type="number" id="payment_amount" name="payment_amount" step="0.01" required>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" class="btn" onclick="closePaymentModal()" style="background: #6c757d;">Cancel</button>
+                <button type="submit" class="btn btn-primary">Record Payment</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function filterTable() {
+    const searchValue = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const rows = document.getElementById('feeTableBody').getElementsByTagName('tr');
+    
+    for (let row of rows) {
+        const name = row.cells[1]?.innerText.toLowerCase() || '';
+        const status = row.cells[5]?.innerText || '';
+        
+        const matchesSearch = name.includes(searchValue);
+        const matchesStatus = !statusFilter || status === statusFilter;
+        
+        row.style.display = matchesSearch && matchesStatus ? '' : 'none';
+    }
+}
+
+function openAddModal() {
+    document.getElementById('feeModal').style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('feeModal').style.display = 'none';
+}
+
+function recordPayment(feeId, studentId) {
+    document.getElementById('payment_fee_id').value = feeId;
+    document.getElementById('paymentModal').style.display = 'flex';
+}
+
+function closePaymentModal() {
+    document.getElementById('paymentModal').style.display = 'none';
+}
+
+window.onclick = function(event) {
+    if (event.target === document.getElementById('feeModal')) {
+        closeModal();
+    }
+    if (event.target === document.getElementById('paymentModal')) {
+        closePaymentModal();
+    }
+}
+</script>
+{% endblock %}
