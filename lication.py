@@ -26,10 +26,11 @@ def allowed_file(filename):
 
 # Database configuration
 db_config = {
-    'host': 'localhost',
-    'database': 'university_db',
-    'user': 'root',
-    'password': 'Netone2004#*',
+    'host': os.environ.get('DB_HOST'),
+    'database': os.environ.get('DB_NAME'),
+    'user': os.environ.get('DB_USER'),
+    'password': os.environ.get('DB_PASSWORD'),
+    'port': int(os.environ.get('DB_PORT', 3306)),
     'auth_plugin': 'mysql_native_password',
     'use_pure': True
 }
